@@ -2,7 +2,7 @@
   "name": "Ancia Plugins Registry",
   "schema_version": "1.0",
   "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
-  "updated_at": "2026-02-21T00:00:00Z",
+  "updated_at": "2026-02-21T08:58:41Z",
   "plugins": [
     {
       "id": "chat-mood",
@@ -81,6 +81,34 @@
       ],
       "tools": [
         "system.time"
+      ]
+    },
+    {
+      "id": "user-memory",
+      "name": "User Memory",
+      "subtitle": "Постоянная память пользователя",
+      "description": "Сохраняет, вспоминает и удаляет факты о пользователе для персонализированных ответов.",
+      "category": "system",
+      "version": "1.0.0",
+      "homepage": "",
+      "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+      "manifest_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/plugins/user-memory/manifest.json",
+      "package_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/packages/user-memory-1.0.0.zip",
+      "source": "registry",
+      "preinstalled": false,
+      "requires_network": false,
+      "keywords": [
+        "память",
+        "профиль",
+        "запомнить",
+        "вспомнить",
+        "забыть",
+        "пользователь"
+      ],
+      "tools": [
+        "memory.remember",
+        "memory.recall",
+        "memory.forget"
       ]
     },
     {

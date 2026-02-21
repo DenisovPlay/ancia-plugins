@@ -1,0 +1,420 @@
+{
+  "id": "user-memory",
+  "name": "User Memory",
+  "subtitle": "Постоянная память пользователя",
+  "description": "Сохраняет, вспоминает и удаляет факты о пользователе для персонализированных ответов.",
+  "homepage": "",
+  "manifest_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/plugins/user-memory/manifest.json",
+  "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+  "package_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/packages/user-memory-1.0.0.zip",
+  "source": "registry",
+  "preinstalled": false,
+  "enabled": true,
+  "tools": [
+    {
+      "name": "memory.remember",
+      "description": "ОБЯЗАТЕЛЬНО: вызывай этот инструмент, когда пользователь просит запомнить или сохранить личный факт. Никогда не подтверждай сохранение памяти без вызова этого инструмента.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "fact": {
+            "type": "string",
+            "description": "Факт о пользователе, который нужно запомнить."
+          },
+          "key": {
+            "type": "string",
+            "description": "Необязательный стабильный ключ, например hometown, favorite_food, timezone."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Необязательные теги для классификации записи памяти."
+          },
+          "importance": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "default": 3,
+            "description": "Оценка важности от 1 до 5."
+          },
+          "overwrite_key": {
+            "type": "boolean",
+            "default": true,
+            "description": "Если true, перезаписывает существующую запись с тем же ключом для этого пользователя."
+          }
+        },
+        "required": [
+          "fact"
+        ],
+        "additionalProperties": false
+      },
+      "runtime_meta": {
+        "display_name": "User Memory",
+        "subtitle": "Сохранение фактов о пользователе",
+        "category": "system",
+        "keywords": [
+          "память",
+          "профиль",
+          "запомнить",
+          "пользователь",
+          "предпочтения"
+        ],
+        "requires_network": false,
+        "auto_invoke": {
+          "enabled": true,
+          "triggers": [
+            "запомни",
+            "remember",
+            "сохрани в памяти"
+          ],
+          "args": {
+            "fact": {
+              "source": "user_text",
+              "strip_prefixes": [
+                "запомни, что",
+                "запомни что",
+                "запомни",
+                "remember that",
+                "remember",
+                "сохрани в памяти, что",
+                "сохрани в памяти"
+              ]
+            }
+          }
+        },
+        "aliases": [
+          "memory.user.remember",
+          "memory.remember",
+          "user.memory.remember",
+          "remember",
+          "user.remember",
+          "memory.save"
+        ],
+        "prompt": "Обязательно вызывай этот инструмент, если пользователь просит запомнить факт о себе (запомни/remember/сохрани в памяти). До вызова не подтверждай, что память обновлена. Передавай в args.fact очищенный факт без вводной команды. Если явно виден тип факта (имя, возраст, город, предпочтение), заполняй args.key (например name/age/city/preference)."
+      },
+      "handler": {
+        "type": "python",
+        "module_file": "plugin.py",
+        "callable": "remember"
+      },
+      "llm_schema": {
+        "type": "function",
+        "function": {
+          "name": "memory.remember",
+          "description": "ОБЯЗАТЕЛЬНО при запросах: \"запомни\", \"remember this\", \"сохрани в памяти\". Инструмент должен быть вызван до подтверждения, что память сохранена.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "fact": {
+                "type": "string",
+                "description": "Факт о пользователе, который нужно запомнить."
+              },
+              "key": {
+                "type": "string",
+                "description": "Необязательный стабильный ключ, например hometown, favorite_food, timezone."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Необязательные теги для классификации записи памяти."
+              },
+              "importance": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5,
+                "default": 3,
+                "description": "Оценка важности от 1 до 5."
+              },
+              "overwrite_key": {
+                "type": "boolean",
+                "default": true,
+                "description": "Если true, перезаписывает существующую запись с тем же ключом для этого пользователя."
+              }
+            },
+            "required": [
+              "fact"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "name": "memory.recall",
+      "description": "Вызывай этот инструмент, когда пользователь спрашивает, что ты о нем помнишь, или просит вспомнить сохраненные факты.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Поисковый запрос для поиска релевантных записей памяти."
+          },
+          "key": {
+            "type": "string",
+            "description": "Точный поиск по ключу."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Фильтрация записей памяти по тегам."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 5,
+            "description": "Максимальное число возвращаемых записей памяти."
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "current_user",
+              "all"
+            ],
+            "default": "current_user",
+            "description": "Искать только память текущего пользователя или по всем сохраненным записям."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "runtime_meta": {
+        "display_name": "User Memory",
+        "subtitle": "Чтение фактов о пользователе",
+        "category": "system",
+        "keywords": [
+          "память",
+          "вспомнить",
+          "профиль",
+          "контекст",
+          "пользователь"
+        ],
+        "requires_network": false,
+        "auto_invoke": {
+          "enabled": true,
+          "triggers": [
+            "что ты помнишь",
+            "что ты знаешь обо мне",
+            "напомни",
+            "какой у меня",
+            "какая у меня",
+            "какое у меня",
+            "кто я",
+            "мой телефон",
+            "my phone",
+            "what do you remember"
+          ],
+          "args": {
+            "query": {
+              "source": "user_text",
+              "strip_prefixes": [
+                "что ты помнишь обо мне",
+                "что ты помнишь",
+                "что ты знаешь обо мне",
+                "напомни",
+                "какой у меня",
+                "какая у меня",
+                "какое у меня",
+                "кто я",
+                "мой телефон",
+                "what do you remember about me",
+                "what do you remember",
+                "my phone"
+              ]
+            }
+          }
+        },
+        "aliases": [
+          "memory.user.recall",
+          "memory.recall",
+          "user.memory.recall",
+          "recall",
+          "memory.read",
+          "remember.about.user"
+        ],
+        "prompt": "Вызывай этот инструмент, когда пользователь просит вспомнить ранее сохраненные факты (что ты помнишь, напомни, recall). Если запрос общий — вызывай без key и с кратким query по сути вопроса. Если пользователь указал конкретное поле, используй args.key."
+      },
+      "handler": {
+        "type": "python",
+        "module_file": "plugin.py",
+        "callable": "recall"
+      },
+      "llm_schema": {
+        "type": "function",
+        "function": {
+          "name": "memory.recall",
+          "description": "Используй для запросов: \"что ты помнишь обо мне\", \"вспомни\", \"recall my info\".",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Поисковый запрос для поиска релевантных записей памяти."
+              },
+              "key": {
+                "type": "string",
+                "description": "Точный поиск по ключу."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Фильтрация записей памяти по тегам."
+              },
+              "limit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "default": 5,
+                "description": "Максимальное число возвращаемых записей памяти."
+              },
+              "scope": {
+                "type": "string",
+                "enum": [
+                  "current_user",
+                  "all"
+                ],
+                "default": "current_user",
+                "description": "Искать только память текущего пользователя или по всем сохраненным записям."
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "name": "memory.forget",
+      "description": "Вызывай этот инструмент, когда пользователь просит забыть или удалить конкретную запись памяти.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Идентификатор записи памяти для удаления."
+          },
+          "key": {
+            "type": "string",
+            "description": "Удаление записей памяти по ключу."
+          },
+          "query": {
+            "type": "string",
+            "description": "Удаление записей памяти, совпадающих с этим текстом."
+          },
+          "all_matching": {
+            "type": "boolean",
+            "default": false,
+            "description": "Если true, удаляет все совпавшие записи вместо одной."
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "current_user",
+              "all"
+            ],
+            "default": "current_user",
+            "description": "Удалять только память текущего пользователя или по всем записям."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "runtime_meta": {
+        "display_name": "User Memory",
+        "subtitle": "Удаление фактов о пользователе",
+        "category": "system",
+        "keywords": [
+          "память",
+          "забыть",
+          "удалить",
+          "приватность",
+          "пользователь"
+        ],
+        "requires_network": false,
+        "aliases": [
+          "memory.user.forget",
+          "memory.forget",
+          "user.memory.forget",
+          "forget",
+          "memory.delete",
+          "memory.remove"
+        ],
+        "prompt": "Вызывай этот инструмент, когда пользователь просит забыть/удалить факт из памяти. Если указан id — передавай args.id. Если указан тип факта (например имя или город), передавай args.key. Если формулировка свободная, передавай args.query."
+      },
+      "handler": {
+        "type": "python",
+        "module_file": "plugin.py",
+        "callable": "forget"
+      },
+      "llm_schema": {
+        "type": "function",
+        "function": {
+          "name": "memory.forget",
+          "description": "Используй для запросов: \"забудь\", \"удали из памяти\", \"forget this\".",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Идентификатор записи памяти для удаления."
+              },
+              "key": {
+                "type": "string",
+                "description": "Удаление записей памяти по ключу."
+              },
+              "query": {
+                "type": "string",
+                "description": "Удаление записей памяти, совпадающих с этим текстом."
+              },
+              "all_matching": {
+                "type": "boolean",
+                "default": false,
+                "description": "Если true, удаляет все совпавшие записи вместо одной."
+              },
+              "scope": {
+                "type": "string",
+                "enum": [
+                  "current_user",
+                  "all"
+                ],
+                "default": "current_user",
+                "description": "Удалять только память текущего пользователя или по всем записям."
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  ],
+  "ui_extensions": [
+    {
+      "type": "script",
+      "path": "ui/tool-ui.js",
+      "url": "",
+      "load": "script"
+    }
+  ],
+  "version": "1.0.0",
+  "category": "system",
+  "keywords": [
+    "память",
+    "профиль",
+    "запомнить",
+    "вспомнить",
+    "забыть",
+    "пользователь"
+  ],
+  "locked": false,
+  "allow_update": true,
+  "requires_network": false
+}
