@@ -134,6 +134,14 @@ _QUERY_STOPWORDS: set[str] = {
   "you",
 }
 
+_GENERIC_RECALL_PATTERNS: tuple[str, ...] = (
+  r"\bчто\s+ты\s+(обо\s+мне\s+)?помни\w*\b",
+  r"\bчто\s+ты\s+знаешь\s+обо\s+мне\b",
+  r"\bнапомни(?:\s+мне)?\b",
+  r"\bwhat\s+do\s+you\s+remember(?:\s+about\s+me)?\b",
+  r"\bwhat\s+do\s+you\s+know\s+about\s+me\b",
+)
+
 _SLOT_HINT_RULES: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
   (
     "phone",
@@ -206,6 +214,42 @@ _SLOT_HINT_RULES: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
     ("profile", "timezone"),
   ),
 ]
+
+_CYRILLIC_TO_LATIN: dict[str, str] = {
+  "а": "a",
+  "б": "b",
+  "в": "v",
+  "г": "g",
+  "д": "d",
+  "е": "e",
+  "ё": "e",
+  "ж": "zh",
+  "з": "z",
+  "и": "i",
+  "й": "y",
+  "к": "k",
+  "л": "l",
+  "м": "m",
+  "н": "n",
+  "о": "o",
+  "п": "p",
+  "р": "r",
+  "с": "s",
+  "т": "t",
+  "у": "u",
+  "ф": "f",
+  "х": "h",
+  "ц": "ts",
+  "ч": "ch",
+  "ш": "sh",
+  "щ": "shch",
+  "ъ": "",
+  "ы": "y",
+  "ь": "",
+  "э": "e",
+  "ю": "yu",
+  "я": "ya",
+}
 
 
 def _now_utc_iso() -> str:
@@ -365,6 +409,28 @@ def _infer_key_from_terms(terms: list[str]) -> str:
   return ""
 
 
+def _looks_like_generic_recall_query(value: str) -> bool:
+  query = _normalize_text(value, max_len=240).lower()
+  if not query:
+    return False
+  for pattern in _GENERIC_RECALL_PATTERNS:
+    if re.search(pattern, query, flags=re.IGNORECASE):
+      return True
+
+  # If only memory-intent verbs remain after stopword filtering, treat it as a generic recall query.
+  intent_terms = set(_tokenize_query(query))
+  if not intent_terms:
+    return True
+  return intent_terms.issubset({
+    "помнишь",
+    "помнить",
+    "знаешь",
+    "remember",
+    "recall",
+    "memory",
+  })
+
+
 def _infer_slot_from_text(text: str) -> tuple[str, list[str]]:
   safe = _normalize_text(text, max_len=MAX_FACT_LEN).lower()
   if not safe:
@@ -457,6 +523,74 @@ def _fuzzy_similarity(query: str, target: str) -> float:
   if not q or not t:
     return 0.0
   return SequenceMatcher(a=q, b=t).ratio()
+
+
+def _latinize_cyrillic(value: str) -> str:
+  chars: list[str] = []
+  for ch in value:
+    chars.append(_CYRILLIC_TO_LATIN.get(ch, ch))
+  return "".join(chars)
+
+
+def _normalize_user_identity(value: Any) -> str:
+  raw = _normalize_text(value, max_len=96).lower()
+  if not raw:
+    return ""
+  latin = _latinize_cyrillic(raw)
+  latin = re.sub(r"[^a-z0-9]+", " ", latin, flags=re.IGNORECASE)
+  return re.sub(r"\s+", " ", latin).strip()
+
+
+def _split_user_identity(value: Any) -> list[str]:
+  normalized = _normalize_user_identity(value)
+  if not normalized:
+    return []
+  parts = [part for part in normalized.split(" ") if len(part) >= 2]
+  deduped: list[str] = []
+  seen: set[str] = set()
+  for part in parts:
+    if part in seen:
+      continue
+    seen.add(part)
+    deduped.append(part)
+    if len(deduped) >= 6:
+      break
+  return deduped
+
+
+def _user_identities_match(runtime_user_name: str, entry_user_name: str) -> bool:
+  if not runtime_user_name or not entry_user_name:
+    return False
+  if runtime_user_name == entry_user_name:
+    return True
+
+  runtime_norm = _normalize_user_identity(runtime_user_name)
+  entry_norm = _normalize_user_identity(entry_user_name)
+  if not runtime_norm or not entry_norm:
+    return False
+  if runtime_norm == entry_norm:
+    return True
+
+  if len(runtime_norm) >= 4 and runtime_norm in entry_norm:
+    return True
+  if len(entry_norm) >= 4 and entry_norm in runtime_norm:
+    return True
+
+  runtime_tokens = _split_user_identity(runtime_user_name)
+  entry_tokens = _split_user_identity(entry_user_name)
+  if runtime_tokens and entry_tokens:
+    runtime_set = set(runtime_tokens)
+    entry_set = set(entry_tokens)
+    overlap = runtime_set.intersection(entry_set)
+    if overlap and (len(overlap) / float(min(len(runtime_set), len(entry_set)))) >= 0.5:
+      return True
+    # Handle transliteration variants like "andrey" vs "andrei".
+    for left in runtime_tokens:
+      for right in entry_tokens:
+        if SequenceMatcher(a=left, b=right).ratio() >= 0.78:
+          return True
+
+  return SequenceMatcher(a=runtime_norm, b=entry_norm).ratio() >= 0.72
 
 
 def _normalize_memory_entry(raw: Any) -> dict[str, Any] | None:
@@ -790,7 +924,9 @@ def _matches_scope(entry: dict[str, Any], *, scope: str, runtime_user_name: str)
     return True
   entry_user = _normalize_text(entry.get("user_name"), max_len=96).lower()
   # Include user-specific entries and global entries (empty user_name).
-  return entry_user in {"", safe_runtime_user}
+  if not entry_user:
+    return True
+  return _user_identities_match(safe_runtime_user, entry_user)
 
 
 def _public_memory(entry: dict[str, Any], *, include_user: bool) -> dict[str, Any]:
@@ -976,6 +1112,8 @@ def remember(args: dict[str, Any], runtime: Any, host: Any) -> dict[str, Any]:
 def recall(args: dict[str, Any], runtime: Any, host: Any) -> dict[str, Any]:
   payload = args or {}
   query = _normalize_text(payload.get("query"), max_len=220)
+  if _looks_like_generic_recall_query(query):
+    query = ""
   key = _canonicalize_key(payload.get("key"))
   tags = _normalize_tags(payload.get("tags"))
   scope = _resolve_scope(payload.get("scope"))
