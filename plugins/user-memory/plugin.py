@@ -1123,8 +1123,6 @@ def recall(args: dict[str, Any], runtime: Any, host: Any) -> dict[str, Any]:
   query_terms = _expand_query_terms(base_query_terms)
   if not key:
     key = _infer_key_from_terms(base_query_terms + query_terms)
-  if key:
-    tags = _merge_tags(tags, _default_tags_for_key(key))
 
   runtime_user_name = _normalize_text(getattr(runtime, "user_name", ""), max_len=96)
   include_user = scope == "all"
