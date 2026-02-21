@@ -1,0 +1,8 @@
+[data-tool-plugin-id="visit-website"] .tool-call-status-icon {
+  color: #a5f3fc;
+}
+
+[data-tool-plugin-id="visit-website"] .tool-call-card {
+  border-color: rgba(45, 212, 191, 0.3);
+  background: linear-gradient(120deg, rgba(18, 43, 43, 0.68), rgba(24, 26, 36, 0.72));
+}

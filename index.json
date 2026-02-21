@@ -1,0 +1,114 @@
+{
+  "name": "Ancia Plugins Registry",
+  "schema_version": "1.0",
+  "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+  "updated_at": "2026-02-21T00:00:00Z",
+  "plugins": [
+    {
+      "id": "chat-mood",
+      "name": "Chat Mood",
+      "subtitle": "Состояние чата",
+      "description": "Устанавливает визуальное состояние (mood) чата.",
+      "category": "agent",
+      "version": "1.0.0",
+      "homepage": "",
+      "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+      "manifest_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/plugins/chat-mood/manifest.json",
+      "package_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/packages/chat-mood-1.0.0.zip",
+      "source": "preinstalled",
+      "preinstalled": true,
+      "requires_network": false,
+      "keywords": [
+        "mood",
+        "chat",
+        "state",
+        "фон",
+        "настроение",
+        "состояние"
+      ],
+      "tools": [
+        "chat.set_mood"
+      ]
+    },
+    {
+      "id": "duckduckgo",
+      "name": "Web Search (DuckDuckGo)",
+      "subtitle": "Веб-поиск по интернету",
+      "description": "Веб-поиск через DuckDuckGo для актуальных фактов и ссылок.",
+      "category": "web",
+      "version": "1.0.0",
+      "homepage": "https://lmstudio.ai/danielsig/duckduckgo",
+      "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+      "manifest_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/plugins/duckduckgo/manifest.json",
+      "package_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/packages/duckduckgo-1.0.0.zip",
+      "source": "preinstalled",
+      "preinstalled": true,
+      "requires_network": true,
+      "keywords": [
+        "duckduckgo",
+        "search",
+        "web",
+        "поиск",
+        "интернет",
+        "новости",
+        "факты"
+      ],
+      "tools": [
+        "web.search.duckduckgo"
+      ]
+    },
+    {
+      "id": "system-time",
+      "name": "System Time",
+      "subtitle": "Системное время",
+      "description": "Возвращает текущее время и дату.",
+      "category": "system",
+      "version": "1.0.0",
+      "homepage": "",
+      "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+      "manifest_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/plugins/system-time/manifest.json",
+      "package_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/packages/system-time-1.0.0.zip",
+      "source": "preinstalled",
+      "preinstalled": true,
+      "requires_network": false,
+      "keywords": [
+        "time",
+        "date",
+        "system",
+        "время",
+        "дата",
+        "timezone"
+      ],
+      "tools": [
+        "system.time"
+      ]
+    },
+    {
+      "id": "visit-website",
+      "name": "Visit Website",
+      "subtitle": "Чтение содержимого страниц",
+      "description": "Открывает URL и извлекает содержимое страницы.",
+      "category": "web",
+      "version": "1.0.0",
+      "homepage": "https://lmstudio.ai/danielsig/visit-website",
+      "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+      "manifest_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/plugins/visit-website/manifest.json",
+      "package_url": "https://raw.githubusercontent.com/DenisovPlay/ancia-plugins/main/packages/visit-website-1.0.0.zip",
+      "source": "preinstalled",
+      "preinstalled": true,
+      "requires_network": true,
+      "keywords": [
+        "visit",
+        "website",
+        "url",
+        "страница",
+        "сайт",
+        "контент",
+        "браузинг"
+      ],
+      "tools": [
+        "web.visit.website"
+      ]
+    }
+  ]
+}

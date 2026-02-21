@@ -1,0 +1,8 @@
+[data-tool-plugin-id="system-time"] .tool-call-status-icon {
+  color: #fcd34d;
+}
+
+[data-tool-plugin-id="system-time"] .tool-call-card {
+  border-color: rgba(250, 204, 21, 0.3);
+  background: linear-gradient(120deg, rgba(54, 39, 10, 0.68), rgba(27, 27, 31, 0.72));
+}

@@ -1,0 +1,85 @@
+{
+  "id": "duckduckgo",
+  "name": "Web Search (DuckDuckGo)",
+  "subtitle": "Веб-поиск по интернету",
+  "description": "Веб-поиск через DuckDuckGo для актуальных фактов и ссылок.",
+  "homepage": "https://lmstudio.ai/danielsig/duckduckgo",
+  "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+  "source": "preinstalled",
+  "preinstalled": true,
+  "enabled": true,
+  "version": "1.0.0",
+  "category": "web",
+  "keywords": [
+    "duckduckgo",
+    "search",
+    "web",
+    "поиск",
+    "интернет",
+    "новости",
+    "факты"
+  ],
+  "locked": false,
+  "allow_update": true,
+  "requires_network": true,
+  "ui_extensions": [
+    {
+      "type": "style",
+      "path": "ui/tool-ui.css"
+    },
+    {
+      "type": "script",
+      "path": "ui/tool-ui.js",
+      "load": "script"
+    }
+  ],
+  "tools": [
+    {
+      "name": "web.search.duckduckgo",
+      "title": "Web Search (DuckDuckGo)",
+      "subtitle": "Веб-поиск по интернету",
+      "description": "Веб-поиск через DuckDuckGo для актуальных фактов и ссылок.",
+      "category": "web",
+      "keywords": [
+        "duckduckgo",
+        "search",
+        "web",
+        "поиск",
+        "интернет",
+        "новости",
+        "факты"
+      ],
+      "aliases": [
+        "web.search",
+        "web.search.duckgo",
+        "duckduckgo.search",
+        "duckgo.search"
+      ],
+      "prompt": "Используй для поиска актуальной информации в интернете, когда нужны свежие факты и ссылки.",
+      "requires_network": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Поисковый запрос"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Максимум результатов (1–10)",
+            "default": 5
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "handler": {
+        "type": "python",
+        "module_file": "plugin.py",
+        "callable": "handle"
+      }
+    }
+  ]
+}

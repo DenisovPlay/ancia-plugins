@@ -1,0 +1,88 @@
+{
+  "id": "visit-website",
+  "name": "Visit Website",
+  "subtitle": "Чтение содержимого страниц",
+  "description": "Открывает URL и извлекает содержимое страницы.",
+  "homepage": "https://lmstudio.ai/danielsig/visit-website",
+  "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+  "source": "preinstalled",
+  "preinstalled": true,
+  "enabled": true,
+  "version": "1.0.0",
+  "category": "web",
+  "keywords": [
+    "visit",
+    "website",
+    "url",
+    "страница",
+    "сайт",
+    "контент",
+    "браузинг"
+  ],
+  "locked": false,
+  "allow_update": true,
+  "requires_network": true,
+  "ui_extensions": [
+    {
+      "type": "style",
+      "path": "ui/tool-ui.css"
+    },
+    {
+      "type": "script",
+      "path": "ui/tool-ui.js",
+      "load": "script"
+    }
+  ],
+  "tools": [
+    {
+      "name": "web.visit.website",
+      "title": "Visit Website",
+      "subtitle": "Чтение содержимого страниц",
+      "description": "Открывает URL и извлекает содержимое страницы.",
+      "category": "web",
+      "keywords": [
+        "visit",
+        "website",
+        "url",
+        "страница",
+        "сайт",
+        "контент",
+        "браузинг"
+      ],
+      "aliases": [
+        "web.visit",
+        "visit.website"
+      ],
+      "prompt": "Используй, когда нужно открыть конкретный URL и извлечь содержимое страницы.",
+      "requires_network": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL страницы"
+          },
+          "max_chars": {
+            "type": "integer",
+            "description": "Лимит символов контента",
+            "default": 6000
+          },
+          "max_links": {
+            "type": "integer",
+            "description": "Лимит ссылок",
+            "default": 20
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "handler": {
+        "type": "python",
+        "module_file": "plugin.py",
+        "callable": "handle"
+      }
+    }
+  ]
+}

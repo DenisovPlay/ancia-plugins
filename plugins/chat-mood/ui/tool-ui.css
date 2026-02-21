@@ -1,0 +1,8 @@
+[data-tool-plugin-id="chat-mood"] .tool-call-status-icon {
+  color: #c4b5fd;
+}
+
+[data-tool-plugin-id="chat-mood"] .tool-call-card {
+  border-color: rgba(196, 181, 253, 0.3);
+  background: linear-gradient(120deg, rgba(53, 34, 78, 0.62), rgba(28, 23, 43, 0.72));
+}

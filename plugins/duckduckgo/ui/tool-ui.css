@@ -1,0 +1,8 @@
+[data-tool-plugin-id="duckduckgo"] .tool-call-status-icon {
+  color: #8be7ff;
+}
+
+[data-tool-plugin-id="duckduckgo"] .tool-call-card {
+  border-color: rgba(56, 189, 248, 0.32);
+  background: linear-gradient(120deg, rgba(12, 35, 52, 0.7), rgba(18, 24, 38, 0.74));
+}

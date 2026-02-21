@@ -1,0 +1,90 @@
+{
+  "id": "chat-mood",
+  "name": "Chat Mood",
+  "subtitle": "Состояние чата",
+  "description": "Устанавливает визуальное состояние (mood) чата.",
+  "homepage": "",
+  "repo_url": "https://github.com/DenisovPlay/ancia-plugins",
+  "source": "preinstalled",
+  "preinstalled": true,
+  "enabled": true,
+  "version": "1.0.0",
+  "category": "agent",
+  "keywords": [
+    "mood",
+    "chat",
+    "state",
+    "фон",
+    "настроение",
+    "состояние"
+  ],
+  "locked": false,
+  "allow_update": true,
+  "requires_network": false,
+  "ui_extensions": [
+    {
+      "type": "style",
+      "path": "ui/tool-ui.css"
+    },
+    {
+      "type": "script",
+      "path": "ui/tool-ui.js",
+      "load": "script"
+    }
+  ],
+  "tools": [
+    {
+      "name": "chat.set_mood",
+      "title": "Chat Mood",
+      "subtitle": "Состояние чата",
+      "description": "Устанавливает визуальное состояние (mood) чата.",
+      "category": "agent",
+      "keywords": [
+        "mood",
+        "chat",
+        "state",
+        "фон",
+        "настроение",
+        "состояние"
+      ],
+      "aliases": [
+        "chat.mood",
+        "set_mood"
+      ],
+      "prompt": "Используй для смены визуального состояния чата, когда тон ответа явно меняется.",
+      "requires_network": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mood": {
+            "type": "string",
+            "enum": [
+              "neutral",
+              "success",
+              "error",
+              "warning",
+              "thinking",
+              "planning",
+              "coding",
+              "researching",
+              "creative",
+              "friendly",
+              "waiting",
+              "offline"
+            ],
+            "description": "Состояние интерфейса чата."
+          }
+        },
+        "required": [
+          "mood"
+        ],
+        "additionalProperties": false
+      },
+      "handler": {
+        "type": "python",
+        "module_file": "plugin.py",
+        "callable": "handle"
+      }
+    }
+  ]
+}
