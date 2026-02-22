@@ -142,6 +142,44 @@ _GENERIC_RECALL_PATTERNS: tuple[str, ...] = (
   r"\bwhat\s+do\s+you\s+know\s+about\s+me\b",
 )
 
+_GENERIC_LIST_PATTERNS: tuple[str, ...] = (
+  r"\bчто\s+ты\s+запомнил\w*\b",
+  r"\bпокажи\s+(всю|все|всё)\s+памят\w*\b",
+  r"\bпокажи\s+памят\w*\b",
+  r"\bвыведи\s+памят\w*\b",
+  r"\bshow\s+all\s+memor\w*\b",
+  r"\blist\s+memor\w*\b",
+  r"\bwhat\s+have\s+you\s+remembered\b",
+)
+
+_FIRST_PERSON_MARKERS: tuple[str, ...] = (
+  "я ",
+  "я-",
+  "у меня",
+  "мой ",
+  "моя ",
+  "моё ",
+  "мое ",
+  "мои ",
+  "мне ",
+  "меня ",
+  "меня зовут",
+  "i ",
+  "i'm ",
+  "im ",
+  "my ",
+  "me ",
+  "mine ",
+)
+
+_SECOND_PERSON_PREFIXES: tuple[str, ...] = (
+  "ты ",
+  "ты-",
+  "you ",
+  "you are ",
+  "you're ",
+)
+
 _SLOT_HINT_RULES: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
   (
     "phone",
@@ -429,6 +467,47 @@ def _looks_like_generic_recall_query(value: str) -> bool:
     "recall",
     "memory",
   })
+
+
+def _looks_like_generic_memory_list_query(value: str) -> bool:
+  query = _normalize_text(value, max_len=240).lower()
+  if not query:
+    return False
+  for pattern in _GENERIC_LIST_PATTERNS:
+    if re.search(pattern, query, flags=re.IGNORECASE):
+      return True
+  return False
+
+
+def _has_first_person_marker(value: str) -> bool:
+  safe = _normalize_text(value, max_len=MAX_FACT_LEN).lower()
+  if not safe:
+    return False
+  return any(marker in safe for marker in _FIRST_PERSON_MARKERS)
+
+
+def _looks_like_assistant_directed_statement(value: str) -> bool:
+  safe = _normalize_text(value, max_len=MAX_FACT_LEN).lower()
+  if not safe:
+    return False
+  if not safe.startswith(_SECOND_PERSON_PREFIXES):
+    return False
+  return not _has_first_person_marker(safe)
+
+
+def _should_ignore_remember_fact(value: str) -> bool:
+  safe = _normalize_text(value, max_len=MAX_FACT_LEN)
+  if not safe:
+    return True
+  if "?" in safe:
+    return True
+  if _looks_like_generic_recall_query(safe):
+    return True
+  if _looks_like_generic_memory_list_query(safe):
+    return True
+  if _looks_like_assistant_directed_statement(safe):
+    return True
+  return False
 
 
 def _infer_slot_from_text(text: str) -> tuple[str, list[str]]:
@@ -1032,6 +1111,18 @@ def remember(args: dict[str, Any], runtime: Any, host: Any) -> dict[str, Any]:
   fact = _normalize_text(payload.get("fact"), max_len=MAX_FACT_LEN)
   if not fact:
     raise ValueError("fact is required")
+  if _should_ignore_remember_fact(fact):
+    total_memories = len(_load_entries(host))
+    return {
+      "status": "ignored",
+      "reason": "not_user_fact",
+      "message": (
+        "Фраза похожа на вопрос/команду или высказывание о модели, "
+        "а не на персональный факт о пользователе."
+      ),
+      "total_memories": total_memories,
+      "request_id": host.create_request_id(),
+    }
 
   key = _canonicalize_key(payload.get("key"))
   tags = _normalize_tags(payload.get("tags"))
@@ -1220,6 +1311,53 @@ def recall(args: dict[str, Any], runtime: Any, host: Any) -> dict[str, Any]:
     "tags": tags,
     "scope": scope,
     "count": len(memories),
+    "memories": memories,
+    "results": results,
+    "request_id": host.create_request_id(),
+  }
+
+
+def list_memories(args: dict[str, Any], runtime: Any, host: Any) -> dict[str, Any]:
+  payload = args or {}
+  scope = _resolve_scope(payload.get("scope"))
+  limit = _safe_int(payload.get("limit"), fallback=20, min_value=1, max_value=200)
+  offset = _safe_int(payload.get("offset"), fallback=0, min_value=0, max_value=2000)
+
+  runtime_user_name = _normalize_text(getattr(runtime, "user_name", ""), max_len=96)
+  include_user = scope == "all"
+  entries = _load_entries(host)
+
+  filtered = [
+    entry for entry in entries
+    if _matches_scope(entry, scope=scope, runtime_user_name=runtime_user_name)
+  ]
+  filtered.sort(key=_entry_sort_key, reverse=True)
+  total = len(filtered)
+  selected = filtered[offset: offset + limit]
+
+  memories = [_public_memory(entry, include_user=include_user) for entry in selected]
+  results = [
+    {
+      "title": memory.get("fact", ""),
+      "snippet": ", ".join(
+        part for part in [
+          f"key={memory.get('key')}" if memory.get("key") else "",
+          f"tags={','.join(memory.get('tags') or [])}" if memory.get("tags") else "",
+          f"importance={memory.get('importance')}",
+          f"user={memory.get('user_name')}" if include_user and memory.get("user_name") else "",
+          f"updated_at={memory.get('updated_at')}" if memory.get("updated_at") else "",
+        ] if part
+      ),
+    }
+    for memory in memories
+  ]
+
+  return {
+    "scope": scope,
+    "offset": offset,
+    "limit": limit,
+    "count": len(memories),
+    "total": total,
     "memories": memories,
     "results": results,
     "request_id": host.create_request_id(),

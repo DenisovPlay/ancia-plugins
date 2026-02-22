@@ -73,6 +73,14 @@
       }
 
       const status = normalizeText(output.status || "saved").toLowerCase();
+      if (status === "ignored") {
+        const reason = truncate(output.message || output.reason || "Запрос не является фактом о пользователе.", 380);
+        const lines = ["**Память не сохранена**", `- Причина: ${reason}`];
+        if (typeof output.total_memories === "number") {
+          lines.push(`- Всего записей: ${Math.max(0, Number(output.total_memories) || 0)}`);
+        }
+        return lines.join("\n");
+      }
       const actionLabel = status === "updated" ? "Память обновлена" : "Память сохранена";
       const memory = output.memory && typeof output.memory === "object" ? output.memory : {};
       const fact = truncate(memory.fact || "", 380);
@@ -148,6 +156,47 @@
     },
   });
 
+    const listOk = registerVariants(["memory.list", "memory.user.list"], {
+    getQueryPreview({ args, output }) {
+      const scope = normalizeText(args?.scope || output?.scope || "current_user");
+      return scope === "all" ? "Вся память (all)" : "Вся память";
+    },
+    formatStart({ args }) {
+      const scope = normalizeText(args?.scope || "current_user");
+      const limit = Math.max(1, Number(args?.limit || 20));
+      if (scope === "all") {
+        return `**Читаю всю память (all):** limit=${limit}`;
+      }
+      return `**Читаю всю память пользователя:** limit=${limit}`;
+    },
+    formatOutput({ output }) {
+      if (!output || typeof output !== "object") {
+        return "";
+      }
+      if (output.error) {
+        return `**Ошибка чтения памяти:** ${truncate(output.error, 400)}`;
+      }
+
+      const memories = safeList(output.memories);
+      const total = Math.max(0, Number(output.total) || memories.length);
+      const offset = Math.max(0, Number(output.offset) || 0);
+      const count = Math.max(0, Number(output.count) || memories.length);
+      if (!memories.length) {
+        return "**Память:** записей нет.";
+      }
+
+      const lines = [
+        `**Память (${count} из ${total})**`,
+        `Смещение: ${offset}`,
+        "",
+      ];
+      memories.slice(0, 30).forEach((entry, index) => {
+        lines.push(formatMemoryLine(entry, index + offset));
+      });
+      return lines.join("\n");
+    },
+  });
+
     const forgetOk = registerVariants(["memory.forget", "memory.user.forget"], {
     getQueryPreview({ args, output }) {
       const key = normalizeText(args?.key || "");
@@ -210,7 +259,7 @@
       return lines.join("\n");
     },
     });
-    return rememberOk && recallOk && forgetOk;
+    return rememberOk && recallOk && listOk && forgetOk;
   }
 
   if (registerAll()) {
